@@ -36,14 +36,35 @@ def get_synonyms(keyword):
             synonyms.add(lemma.name())
     return synonyms
 
+def read_keywords(file_path):
+    """
+    Read keywords from a text file, each keyword on a new line.
+    """
+    keywords = set()
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                keywords.add(line.strip())
+    except Exception as e:
+        print(f"Error reading file {file_path}: {e}")
+    return keywords
+
 def search_keywords_in_text(text, keywords):
     """
     Search for the given keywords in the preprocessed text and count their occurrences.
     """
+    # results = {}
+    # for keyword in keywords:
+    #     if keyword in text:
+    #         results[keyword] = text.count(keyword)
+    # return results
     results = {}
+    text_joined = ' '.join(text)
     for keyword in keywords:
-        if keyword in text:
-            results[keyword] = text.count(keyword)
+        pattern = re.escape(keyword.lower())
+        count = len(re.findall(r'\b' + pattern + r'\b', text_joined))
+        if count > 0:
+            results[keyword] = count
     return results
 
 def extract_entities(text, names):
@@ -134,16 +155,21 @@ def display_results(matching_files, names):
 
 
 if __name__ == "__main__":
-    # Get user input for directory, file extension, keywords, and names
+           # Get user input for directory, file extension, keywords file path, and names
     directory = input("Enter the directory path: ")
     directory = directory.replace("\\", "\\\\")  # Format the directory path
     file_extension = input("Enter the file extension (e.g., .txt, .pdf, .docx): ")
-    keywords = input("Enter keywords separated by commas (leave blank if none): ").strip().split(',')
+    keywords_file_path = input("Enter the path to the keywords file (leave blank to enter keywords manually): ")
     names = input("Enter names separated by commas (leave blank if none): ").strip().split(',')
 
-    # Clean up empty strings from the lists
-    keywords = [kw for kw in keywords if kw]
+    # Clean up empty strings from the names list
     names = [name for name in names if name]
+
+    if keywords_file_path:
+        keywords = read_keywords(keywords_file_path)
+    else:
+        keywords = input("Enter keywords separated by commas (leave blank if none): ").strip().split(',')
+        keywords = [kw for kw in keywords if kw]
 
     matching_files = search_files_in_directory(directory, file_extension, keywords, names)
     display_results(matching_files, names)
